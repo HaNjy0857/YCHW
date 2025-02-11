@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using YCHW.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+});
 
 var app = builder.Build();
 
@@ -29,20 +36,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// 測試資料庫連線
-using (var scope = app.Services.CreateScope())
+if (app.Environment.IsDevelopment())
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-
-    if (context.Database.CanConnect())
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        SeedData.Initialize(services);
-        Console.WriteLine("種子資料初始化完成！");
-    }
-    else
-    {
-        Console.WriteLine("無法連接到資料庫!");
-    }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1");
+        c.RoutePrefix = string.Empty; // 讓 Swagger 頁面變成首頁 (http://localhost:7292/)
+    });
 }
 app.Run();
