@@ -1,11 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using YCHW.Data;
+using YCHW.Repositories.Interface;
+using YCHW.Repositories;
+using YCHW.Services.Interface;
+using YCHW.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
+builder.Services.AddScoped<IPropertyService, PropertyService>();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
