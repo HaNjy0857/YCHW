@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using YCHW.Data;
 using YCHW.Models;
+using YCHW.Services.Interface;
 
 namespace YCHW.Controllers
 {
@@ -8,40 +9,34 @@ namespace YCHW.Controllers
     [Route("api/[controller]")]
     public class PropertiesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-
-        public PropertiesController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly IPropertyService _service;
+        public PropertiesController(IPropertyService service) { _service = service; }
 
         [HttpGet]
-        public IActionResult GetProperties()
+        public async Task<IActionResult> GetAllProperties()
         {
-            var properties = _context.Properties.ToList();
+            var properties = await _service.GetAllPropertiesAsync();
             return Ok(properties);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetProperty(int id)
+        public async Task<IActionResult> GetProperty(int id)
         {
-            var property = _context.Properties.Find(id);
-            if (property == null) return NotFound();
-            return Ok(property);
+            var property = await _service.GetPropertyByIdAsync(id);
+            return property == null ? NotFound() : Ok(property);
         }
 
         [HttpPost]
-        public IActionResult CreateProperty(Property property)
+        public async Task<IActionResult> CreateProperty([FromBody] Property property)
         {
-            _context.Properties.Add(property);
-            _context.SaveChanges();
+            await _service.CreatePropertyAsync(property);
             return CreatedAtAction(nameof(GetProperty), new { id = property.Id }, property);
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateProperty(int id, Property updatedProperty)
+        public async Task<IActionResult> UpdateProperty(int id, [FromBody] Property updatedProperty)
         {
-            var property = _context.Properties.Find(id);
+            var property = await _service.GetPropertyByIdAsync(id);
             if (property == null) return NotFound();
 
             property.Name = updatedProperty.Name;
@@ -51,18 +46,17 @@ namespace YCHW.Controllers
             property.Description = updatedProperty.Description;
             property.UpdatedAt = DateTime.Now;
 
-            _context.SaveChanges();
+            await _service.UpdatePropertyAsync(property);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteProperty(int id)
+        public async Task<IActionResult> DeleteProperty(int id)
         {
-            var property = _context.Properties.Find(id);
+            var property = await _service.GetPropertyByIdAsync(id);
             if (property == null) return NotFound();
 
-            _context.Properties.Remove(property);
-            _context.SaveChanges();
+            await _service.DeletePropertyAsync(id);
             return NoContent();
         }
     }
